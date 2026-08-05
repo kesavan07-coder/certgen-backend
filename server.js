@@ -15,8 +15,16 @@ app.get("/", (req, res) => res.json({ status: "ok", message: "CertGen Pro Email 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
 const makeTransporter = () => nodemailer.createTransport({
-  service: "gmail",
-  auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: { 
+    user: process.env.GMAIL_USER, 
+    pass: (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "") 
+  },
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 30000,
 });
 
 const buildHtml = (to_name, message) => `
