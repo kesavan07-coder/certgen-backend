@@ -15,16 +15,26 @@ app.get("/", (req, res) => res.json({ status: "ok", message: "CertGen Pro Email 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
 const makeTransporter = () => nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  service: "gmail",
   auth: { 
-    user: process.env.GMAIL_USER, 
-    pass: (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "") 
+    user: (process.env.GMAIL_USER || "").trim(), 
+    pass: (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "").trim() 
   },
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 30000,
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+
+app.get("/verify-smtp", async (req, res) => {
+  if (!process.env.GMAIL_USER) return res.status(500).json({ error: "GMAIL_USER not set" });
+  try {
+    const transporter = makeTransporter();
+    await transporter.verify();
+    res.json({ status: "ok", message: "SMTP Connection Verified!" });
+  } catch (err) {
+    console.error("SMTP Verification Failed:", err);
+    res.status(500).json({ error: err.message, code: err.code });
+  }
 });
 
 const buildHtml = (to_name, message) => `
